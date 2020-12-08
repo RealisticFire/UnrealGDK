@@ -411,16 +411,23 @@ inline Query IndexQueryFromSchema(Schema_Object* Object, Schema_FieldId Id, uint
 		NewQuery.FullSnapshotResult = GetBoolFromSchema(QueryObject, 2);
 	}
 
-	uint32 ResultComponentIdCount = Schema_GetUint32Count(QueryObject, 3);
-	NewQuery.ResultComponentSetIds.Reserve(ResultComponentIdCount);
+	const uint32 ResultComponentIdCount = Schema_GetUint32Count(QueryObject, 3);
+	NewQuery.ResultComponentIds.Reserve(ResultComponentIdCount);
 	for (uint32 ComponentIdIndex = 0; ComponentIdIndex < ResultComponentIdCount; ComponentIdIndex++)
 	{
-		NewQuery.ResultComponentSetIds.Add(Schema_IndexUint32(QueryObject, 3, ComponentIdIndex));
+		NewQuery.ResultComponentIds.Add(Schema_IndexUint32(QueryObject, 3, ComponentIdIndex));
 	}
 
 	if (Schema_GetFloatCount(QueryObject, 4) > 0)
 	{
 		NewQuery.Frequency = Schema_GetFloat(QueryObject, 4);
+	}
+
+	const uint32 ResultComponentSetIdCount = Schema_GetUint32Count(QueryObject, 5);
+	NewQuery.ResultComponentSetIds.Reserve(ResultComponentSetIdCount);
+	for (uint32 ComponentSetIdIndex = 0; ComponentSetIdIndex < ResultComponentSetIdCount; ComponentSetIdIndex++)
+	{
+		NewQuery.ResultComponentSetIds.Add(Schema_IndexUint32(QueryObject, 5, ComponentSetIdIndex));
 	}
 
 	return NewQuery;

@@ -101,8 +101,6 @@ const Worker_ComponentId STARTUP_ACTOR_MANAGER_COMPONENT_ID = 9993;
 const Worker_ComponentId GSM_SHUTDOWN_COMPONENT_ID = 9992;
 const Worker_ComponentId HEARTBEAT_COMPONENT_ID = 9991;
 
-const Worker_ComponentSetId GDK_WELL_KNOWN_COMPONENT_SET_ID = 9999;
-
 const Worker_ComponentId SERVER_AUTH_COMPONENT_SET_ID = 9900;
 const Worker_ComponentId CLIENT_AUTH_COMPONENT_SET_ID = 9901;
 const Worker_ComponentId DATA_COMPONENT_SET_ID = 9902;

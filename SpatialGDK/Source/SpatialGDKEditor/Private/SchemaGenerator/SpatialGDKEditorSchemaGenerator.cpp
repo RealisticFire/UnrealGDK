@@ -60,11 +60,8 @@ TMap<FString, TSet<FString>> PotentialSchemaNameCollisions;
 // QBI
 TMap<float, Worker_ComponentId> NetCullDistanceToComponentId;
 
-namespace
-{
 const FString RelativeSchemaDatabaseFilePath = FPaths::SetExtension(
 	FPaths::Combine(FPaths::ProjectContentDir(), SpatialConstants::SCHEMA_DATABASE_FILE_PATH), FPackageName::GetAssetPackageExtension());
-}
 
 namespace SpatialGDKEditor
 {
