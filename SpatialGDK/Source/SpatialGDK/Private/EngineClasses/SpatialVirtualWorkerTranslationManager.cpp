@@ -178,9 +178,11 @@ void SpatialVirtualWorkerTranslationManager::SendVirtualWorkerMappingUpdate() co
 void SpatialVirtualWorkerTranslationManager::SpawnPartitionEntity(Worker_EntityId PartitionEntityId, VirtualWorkerId VirtualWorkerId)
 {
 	TArray<FWorkerComponentData> Components = SpatialGDK::EntityFactory::CreatePartitionEntityComponents(
-		PartitionEntityId, Translator->NetDriver->InterestFactory.Get(), Translator->LoadBalanceStrategy.Get(), VirtualWorkerId);
+		PartitionEntityId, Translator->NetDriver->InterestFactory.Get(), Translator->LoadBalanceStrategy.Get(), VirtualWorkerId,
+		Translator->NetDriver->DebugCtx != nullptr);
 
-	const Worker_RequestId RequestId = Connection->SendCreateEntityRequest(MoveTemp(Components), &PartitionEntityId);
+	const Worker_RequestId RequestId =
+		Connection->SendCreateEntityRequest(MoveTemp(Components), &PartitionEntityId, SpatialGDK::RETRY_UNTIL_COMPLETE);
 
 	CreateEntityDelegate OnCreateWorkerEntityResponse;
 	OnCreateWorkerEntityResponse.BindLambda([this, VirtualWorkerId](const Worker_CreateEntityResponseOp& Op) {
@@ -194,21 +196,10 @@ void SpatialVirtualWorkerTranslationManager::SpawnPartitionEntity(Worker_EntityI
 			return;
 		}
 
-		if (Op.status_code != WORKER_STATUS_CODE_TIMEOUT)
-		{
-			UE_LOG(LogSpatialVirtualWorkerTranslationManager, Error,
-				   TEXT("Partition entity creation failed: \"%s\". "
-						"Entity: %lld. Virtual Worker: %d"),
-				   UTF8_TO_TCHAR(Op.message), Op.entity_id, VirtualWorkerId);
-			return;
-		}
-
-		UE_LOG(LogSpatialVirtualWorkerTranslationManager, Warning,
-			   TEXT("Retrying timed out partition entity creation. "
+		UE_LOG(LogSpatialVirtualWorkerTranslationManager, Error,
+			   TEXT("Partition entity creation failed: \"%s\". "
 					"Entity: %lld. Virtual Worker: %d"),
-			   Op.entity_id, VirtualWorkerId);
-
-		SpawnPartitionEntity(Op.entity_id, VirtualWorkerId);
+			   UTF8_TO_TCHAR(Op.message), Op.entity_id, VirtualWorkerId);
 	});
 
 	Receiver->AddCreateEntityDelegate(RequestId, MoveTemp(OnCreateWorkerEntityResponse));
@@ -265,7 +256,7 @@ void SpatialVirtualWorkerTranslationManager::QueryForServerWorkerEntities()
 
 	// Make the query.
 	check(Connection != nullptr);
-	const Worker_RequestId RequestID = Connection->SendEntityQueryRequest(&WorkerEntityQuery);
+	const Worker_RequestId RequestID = Connection->SendEntityQueryRequest(&WorkerEntityQuery, SpatialGDK::RETRY_UNTIL_COMPLETE);
 	bWorkerEntityQueryInFlight = true;
 
 	// Register a method to handle the query response.
@@ -284,9 +275,8 @@ void SpatialVirtualWorkerTranslationManager::ServerWorkerEntityQueryDelegate(con
 
 	if (Op.status_code != WORKER_STATUS_CODE_SUCCESS)
 	{
-		UE_LOG(LogSpatialVirtualWorkerTranslationManager, Warning, TEXT("Server worker entity query failed: %s, retrying."),
+		UE_LOG(LogSpatialVirtualWorkerTranslationManager, Error, TEXT("Server worker entity query failed: %s, retrying."),
 			   UTF8_TO_TCHAR(Op.message));
-		QueryForServerWorkerEntities();
 		return;
 	}
 

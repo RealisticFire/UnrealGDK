@@ -32,7 +32,7 @@ windows: &windows
       - <<: *bk_interrupted_by_signal
   timeout_in_minutes: 120
   plugins:
-    - ca-johnson/taskkill#v4.1: ~
+    - improbable-eng/taskkill#v4.4.1: ~
 
 macos: &macos
   agents:
@@ -59,9 +59,7 @@ steps:
     command: "${BUILD_COMMAND}"
     artifact_paths:
       - "../UnrealEngine/Engine/Programs/AutomationTool/Saved/Logs/*"
-      - "C:/b/1/GDKTestGyms/spatial/logs/*"
-      - "C:/b/1/GDKTestGyms/spatial/logs/localdeployment/**/**"
-      - "C:/b/1/GDKTestGyms/spatial/logs/localdeployment/**/*"
+      - "GDKTestGyms/spatial/logs/**/*"
     env:
       BUILD_ALL_CONFIGURATIONS: "${BUILD_ALL_CONFIGURATIONS}"
       ENGINE_COMMIT_HASH: "${ENGINE_COMMIT_HASH}"

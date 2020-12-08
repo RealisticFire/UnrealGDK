@@ -114,6 +114,7 @@ TArray<FWorkerComponentData> EntityFactory::CreateEntityComponents(USpatialActor
 	ComponentDatas.Add(UnrealMetadata(StablyNamedObjectRef, Class->GetPathName(), bNetStartup).CreateUnrealMetadataData());
 	ComponentDatas.Add(NetOwningClientWorker(AuthoritativeClientPartitionId).CreateNetOwningClientWorkerData());
 	ComponentDatas.Add(AuthorityIntent::CreateAuthorityIntentData(IntendedVirtualWorkerId));
+	ComponentDatas.Add(ComponentFactory::CreateEmptyComponentData(SpatialConstants::MIGRATION_DIAGNOSTIC_COMPONENT_ID));
 
 	if (ShouldActorHaveVisibleComponent(Actor))
 	{
@@ -334,7 +335,7 @@ TArray<FWorkerComponentData> EntityFactory::CreateTombstoneEntityComponents(AAct
 TArray<FWorkerComponentData> EntityFactory::CreatePartitionEntityComponents(const Worker_EntityId EntityId,
 																			const InterestFactory* InterestFactory,
 																			const UAbstractLBStrategy* LbStrategy,
-																			VirtualWorkerId VirtualWorker)
+																			VirtualWorkerId VirtualWorker, bool bDebugContextValid)
 {
 	AuthorityDelegationMap DelegationMap;
 	DelegationMap.Add(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID, EntityId);
@@ -342,8 +343,9 @@ TArray<FWorkerComponentData> EntityFactory::CreatePartitionEntityComponents(cons
 	TArray<FWorkerComponentData> Components;
 	Components.Add(Position().CreatePositionData());
 	Components.Add(Metadata(FString::Format(TEXT("PartitionEntity:{0}"), { VirtualWorker })).CreateMetadataData());
-	Components.Add(InterestFactory->CreatePartitionInterest(LbStrategy, VirtualWorker).CreateInterestData());
+	Components.Add(InterestFactory->CreatePartitionInterest(LbStrategy, VirtualWorker, bDebugContextValid).CreateInterestData());
 	Components.Add(AuthorityDelegation(DelegationMap).CreateAuthorityDelegationData());
+	Components.Add(ComponentFactory::CreateEmptyComponentData(SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID));
 
 	return Components;
 }
