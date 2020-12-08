@@ -396,7 +396,7 @@ void USpatialConnectionManager::FinishConnecting(Worker_ConnectionFuture* Connec
 
 				for (Worker_ComponentId i = 0; i < 100; ++i)
 				{
-					SetData.ComponentSets.FindOrAdd(SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID).Add(i);
+					SetData.ComponentSets.FindOrAdd(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID).Add(i);
 				}
 				for (Worker_ComponentId i = 100; i < 100000; ++i)
 				{

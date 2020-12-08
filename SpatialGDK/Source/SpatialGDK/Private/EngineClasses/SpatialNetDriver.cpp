@@ -2103,7 +2103,7 @@ void USpatialNetDriver::CleanUpClientConnection(USpatialNetConnection* Connectio
 
 bool USpatialNetDriver::HasServerAuthority(Worker_EntityId EntityId) const
 {
-	return StaticComponentView->HasAuthority(EntityId, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID);
+	return StaticComponentView->HasAuthority(EntityId, SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID);
 }
 
 bool USpatialNetDriver::HasClientAuthority(Worker_EntityId EntityId) const

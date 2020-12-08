@@ -62,8 +62,8 @@ bool CreateSpawnerEntity(Worker_SnapshotOutputStream* OutputStream)
 	Query AuthoritySelfQuery = {};
 	AuthoritySelfQuery.ResultComponentIds = { SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
 	AuthoritySelfQuery.Constraint.EntityIdConstraint = SpawnerEntity.entity_id;
-	SelfInterest.ComponentInterestMap.Add(SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID);
-	SelfInterest.ComponentInterestMap[SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID].Queries.Add(AuthoritySelfQuery);
+	SelfInterest.ComponentInterestMap.Add(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID);
+	SelfInterest.ComponentInterestMap[SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID].Queries.Add(AuthoritySelfQuery);
 
 	TArray<FWorkerComponentData> Components;
 
@@ -128,10 +128,10 @@ bool CreateGlobalStateManager(Worker_SnapshotOutputStream* OutputStream)
 
 	Interest SelfInterest;
 	Query AuthoritySelfQuery = {};
-	AuthoritySelfQuery.ResultComponentIds  = { SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
+	AuthoritySelfQuery.ResultComponentIds = { SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
 	AuthoritySelfQuery.Constraint.EntityIdConstraint = GSM.entity_id;
-	SelfInterest.ComponentInterestMap.Add(SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID);
-	SelfInterest.ComponentInterestMap[SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID].Queries.Add(AuthoritySelfQuery);
+	SelfInterest.ComponentInterestMap.Add(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID);
+	SelfInterest.ComponentInterestMap[SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID].Queries.Add(AuthoritySelfQuery);
 
 	TArray<FWorkerComponentData> Components;
 
@@ -172,10 +172,10 @@ bool CreateVirtualWorkerTranslator(Worker_SnapshotOutputStream* OutputStream)
 
 	Interest SelfInterest;
 	Query AuthoritySelfQuery = {};
-	AuthoritySelfQuery.ResultComponentIds  = { SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
+	AuthoritySelfQuery.ResultComponentIds = { SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
 	AuthoritySelfQuery.Constraint.EntityIdConstraint = VirtualWorkerTranslator.entity_id;
-	SelfInterest.ComponentInterestMap.Add(SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID);
-	SelfInterest.ComponentInterestMap[SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID].Queries.Add(AuthoritySelfQuery);
+	SelfInterest.ComponentInterestMap.Add(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID);
+	SelfInterest.ComponentInterestMap[SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID].Queries.Add(AuthoritySelfQuery);
 
 	TArray<FWorkerComponentData> Components;
 
@@ -207,7 +207,7 @@ bool CreateSnapshotPartitionEntity(Worker_SnapshotOutputStream* OutputStream)
 	TArray<FWorkerComponentData> Components;
 
 	AuthorityDelegationMap DelegationMap;
-	DelegationMap.Add(SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, SpatialConstants::INITIAL_SNAPSHOT_PARTITION_ENTITY_ID);
+	DelegationMap.Add(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID, SpatialConstants::INITIAL_SNAPSHOT_PARTITION_ENTITY_ID);
 
 	Components.Add(Position(DeploymentOrigin).CreatePositionData());
 	Components.Add(Metadata(TEXT("SnapshotPartitionEntity")).CreateMetadataData());

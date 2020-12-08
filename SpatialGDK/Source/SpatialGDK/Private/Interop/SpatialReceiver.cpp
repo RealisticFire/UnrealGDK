@@ -510,7 +510,7 @@ void USpatialReceiver::OnAuthorityChange(const Worker_ComponentSetAuthorityChang
 {
 	if (HasEntityBeenRequestedForDelete(Op.entity_id))
 	{
-		if (Op.authority == WORKER_AUTHORITY_AUTHORITATIVE && Op.component_set_id == SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID)
+		if (Op.authority == WORKER_AUTHORITY_AUTHORITATIVE && Op.component_set_id == SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
 		{
 			HandleEntityDeletedAuthority(Op.entity_id);
 		}
@@ -546,7 +546,7 @@ void USpatialReceiver::HandlePlayerLifecycleAuthority(const Worker_ComponentSetA
 
 	// Server initializes heartbeat logic based on its authority over the position component,
 	// client does the same for heartbeat component
-	if ((NetDriver->IsServer() && Op.component_set_id == SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID)
+	if ((NetDriver->IsServer() && Op.component_set_id == SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
 		|| (!NetDriver->IsServer() && Op.component_set_id == SpatialConstants::HEARTBEAT_COMPONENT_ID))
 	{
 		if (Op.authority == WORKER_AUTHORITY_AUTHORITATIVE)
@@ -595,7 +595,7 @@ void USpatialReceiver::HandleActorAuthority(const Worker_ComponentSetAuthorityCh
 
 	if (Channel != nullptr)
 	{
-		if (Op.component_set_id == SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID)
+		if (Op.component_set_id == SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
 		{
 			Channel->SetServerAuthority(Op.authority == WORKER_AUTHORITY_AUTHORITATIVE);
 		}
@@ -626,7 +626,7 @@ void USpatialReceiver::HandleActorAuthority(const Worker_ComponentSetAuthorityCh
 		// is player controlled when gaining authority over the pawn and need to wait for the player
 		// state. Likewise, it's possible that the player state doesn't have a pointer to its pawn
 		// yet, so we need to wait for the pawn to arrive.
-		if (Op.component_set_id == SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID)
+		if (Op.component_set_id == SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
 		{
 			if (Op.authority == WORKER_AUTHORITY_AUTHORITATIVE)
 			{

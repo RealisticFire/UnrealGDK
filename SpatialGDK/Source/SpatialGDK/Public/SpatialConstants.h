@@ -83,7 +83,7 @@ const Worker_ComponentId POSITION_COMPONENT_ID = 54;
 const Worker_ComponentId PERSISTENCE_COMPONENT_ID = 55;
 const Worker_ComponentId INTEREST_COMPONENT_ID = 58;
 
-const Worker_ComponentSetId WELL_KNOWN_COMPONENT_SET_ID = 50;
+const Worker_ComponentSetId SERVER_AUTH_COMPONENT_SET_ID = 50;
 
 // This is a component on per-worker system entities.
 const Worker_ComponentId WORKER_COMPONENT_ID = 60;

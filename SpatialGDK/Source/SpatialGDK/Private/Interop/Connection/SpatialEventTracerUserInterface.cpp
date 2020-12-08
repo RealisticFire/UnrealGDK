@@ -132,7 +132,7 @@ USpatialNetDriver* USpatialEventTracerUserInterface::GetSpatialNetDriver(UObject
 	if (World == nullptr)
 	{
 		UE_LOG(LogSpatialEventTracerUserInterface, Error,
-                       TEXT("USpatialEventTracerUserInterface::GetSpatialNetDriver - World is null, will use GWorld instead"));
+			   TEXT("USpatialEventTracerUserInterface::GetSpatialNetDriver - World is null, will use GWorld instead"));
 		World = GWorld;
 	}
 
