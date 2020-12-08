@@ -146,7 +146,7 @@ void USpatialNetDriverDebugContext::OnDebugComponentUpdateReceived(Worker_Entity
 {
 	SpatialGDK::DebugComponent* DbgComp = NetDriver->StaticComponentView->GetComponentData<SpatialGDK::DebugComponent>(Entity);
 	check(DbgComp);
-	if (!NetDriver->StaticComponentView->HasAuthority(Entity, SpatialConstants::GDK_DEBUG_COMPONENT_ID))
+	if (!NetDriver->StaticComponentView->HasAuthority(Entity, SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
 	{
 		if (IsSetIntersectionEmpty(SemanticInterest, DbgComp->ActorTags))
 		{

@@ -278,7 +278,7 @@ void ClientServerRPCService::HandleRPC(const Worker_EntityId EntityId, const Wor
 	// to print errors if the role isn't Authority. Instead, we exit here, and the RPC will be processed by the server that receives
 	// authority.
 	const bool bIsServerRpc = ComponentId == SpatialConstants::CLIENT_ENDPOINT_COMPONENT_ID;
-	if (bIsServerRpc && SubView->HasAuthority(EntityId, SpatialConstants::SERVER_ENDPOINT_COMPONENT_ID))
+	if (bIsServerRpc && SubView->HasAuthority(EntityId, SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID))
 	{
 		const TWeakObjectPtr<UObject> ActorReceivingRPC = NetDriver->PackageMap->GetObjectFromEntityId(EntityId);
 		if (!ActorReceivingRPC.IsValid())

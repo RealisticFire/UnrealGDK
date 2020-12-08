@@ -1163,7 +1163,7 @@ void USpatialSender::CreateTombstoneEntity(AActor* Actor)
 
 void USpatialSender::AddTombstoneToEntity(const Worker_EntityId EntityId)
 {
-	check(NetDriver->StaticComponentView->HasAuthority(EntityId, SpatialConstants::TOMBSTONE_COMPONENT_ID));
+	check(NetDriver->StaticComponentView->HasAuthority(EntityId, SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID));
 
 	Worker_AddComponentOp AddComponentOp{};
 	AddComponentOp.entity_id = EntityId;
