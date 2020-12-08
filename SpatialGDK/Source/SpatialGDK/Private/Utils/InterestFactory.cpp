@@ -43,13 +43,13 @@ void InterestFactory::CreateAndCacheInterestState()
 
 SchemaResultType InterestFactory::CreateClientNonAuthInterestResultType()
 {
-	SchemaResultType ClientNonAuthResultType;
+	SchemaResultType ClientNonAuthResultType{};
 
 	// Add the required unreal components
-	ClientNonAuthResultType.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_NON_AUTH_CLIENT_INTEREST);
+	ClientNonAuthResultType.ComponentIds.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_NON_AUTH_CLIENT_INTEREST);
 
 	// Add all data components- clients don't need to see handover or owner only components on other entities.
-	ClientNonAuthResultType.Push(SpatialConstants::DATA_COMPONENT_SET_ID);
+	ClientNonAuthResultType.ComponentSetsIds.Push(SpatialConstants::DATA_COMPONENT_SET_ID);
 
 	return ClientNonAuthResultType;
 }
@@ -59,35 +59,37 @@ SchemaResultType InterestFactory::CreateClientAuthInterestResultType()
 	SchemaResultType ClientAuthResultType;
 
 	// Add the required known components
-	ClientAuthResultType.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_AUTH_CLIENT_INTEREST);
-	ClientAuthResultType.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_NON_AUTH_CLIENT_INTEREST);
+	ClientAuthResultType.ComponentIds.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_AUTH_CLIENT_INTEREST);
+	ClientAuthResultType.ComponentIds.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_NON_AUTH_CLIENT_INTEREST);
 
 	// Add all the generated unreal components
-	ClientAuthResultType.Push(SpatialConstants::DATA_COMPONENT_SET_ID);
-	ClientAuthResultType.Push(SpatialConstants::OWNER_ONLY_COMPONENT_SET_ID);
+	ClientAuthResultType.ComponentSetsIds.Push(SpatialConstants::DATA_COMPONENT_SET_ID);
+	ClientAuthResultType.ComponentSetsIds.Push(SpatialConstants::OWNER_ONLY_COMPONENT_SET_ID);
 
 	return ClientAuthResultType;
 }
 
 SchemaResultType InterestFactory::CreateServerNonAuthInterestResultType()
 {
-	SchemaResultType ServerNonAuthResultType;
+	SchemaResultType ServerNonAuthResultType{};
 
 	// Add the required unreal components
-	ServerNonAuthResultType.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_NON_AUTH_SERVER_INTEREST);
+	ServerNonAuthResultType.ComponentIds.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_NON_AUTH_SERVER_INTEREST);
 
 	// Add all data, owner only, and handover components
-	ServerNonAuthResultType.Push(SpatialConstants::DATA_COMPONENT_SET_ID);
-	ServerNonAuthResultType.Push(SpatialConstants::OWNER_ONLY_COMPONENT_SET_ID);
-	ServerNonAuthResultType.Push(SpatialConstants::HANDOVER_COMPONENT_SET_ID);
+	ServerNonAuthResultType.ComponentSetsIds.Push(SpatialConstants::DATA_COMPONENT_SET_ID);
+	ServerNonAuthResultType.ComponentSetsIds.Push(SpatialConstants::OWNER_ONLY_COMPONENT_SET_ID);
+	ServerNonAuthResultType.ComponentSetsIds.Push(SpatialConstants::HANDOVER_COMPONENT_SET_ID);
 
 	return ServerNonAuthResultType;
 }
 
 SchemaResultType InterestFactory::CreateServerAuthInterestResultType()
 {
+	SchemaResultType ServerAuthResultType{};
 	// Just the components that we won't have already checked out through authority
-	return SpatialConstants::REQUIRED_COMPONENTS_FOR_AUTH_SERVER_INTEREST;
+	ServerAuthResultType.ComponentIds.Append(SpatialConstants::REQUIRED_COMPONENTS_FOR_AUTH_SERVER_INTEREST);
+	return ServerAuthResultType;
 }
 
 Worker_ComponentData InterestFactory::CreateInterestData(AActor* InActor, const FClassInfo& InInfo, const Worker_EntityId InEntityId) const
@@ -111,26 +113,26 @@ Interest InterestFactory::CreateServerWorkerInterest(const UAbstractLBStrategy* 
 	Query ServerQuery{};
 
 	// Ensure server worker receives AlwaysRelevant entities.
-	ServerQuery.ResultComponentSetIds = ServerNonAuthInterestResultType;
+	ServerQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+	ServerQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 	ServerQuery.Constraint = CreateAlwaysRelevantConstraint();
 	AddComponentQueryPairToInterestComponent(ServerInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerQuery);
 
 	// Workers have interest in all system worker entities.
 	ServerQuery = Query();
-	ServerQuery.ResultComponentSetIds = SchemaResultType{ SpatialConstants::WORKER_COMPONENT_ID };
+	ServerQuery.ResultComponentIds = { SpatialConstants::WORKER_COMPONENT_ID };
 	ServerQuery.Constraint.ComponentConstraint = SpatialConstants::WORKER_COMPONENT_ID;
 	AddComponentQueryPairToInterestComponent(ServerInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerQuery);
 
 	// and server worker entities
 	ServerQuery = Query();
-	ServerQuery.ResultComponentSetIds =
-		SchemaResultType{ SpatialConstants::SERVER_WORKER_COMPONENT_ID, SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
+	ServerQuery.ResultComponentIds = { SpatialConstants::SERVER_WORKER_COMPONENT_ID, SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
 	ServerQuery.Constraint.ComponentConstraint = SpatialConstants::SERVER_WORKER_COMPONENT_ID;
 	AddComponentQueryPairToInterestComponent(ServerInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerQuery);
 
 	// Add a self query to ensure we see the well known entity tag.
 	Query AuthoritySelfQuery = {};
-	AuthoritySelfQuery.ResultComponentSetIds = { SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
+	AuthoritySelfQuery.ResultComponentIds = { SpatialConstants::GDK_KNOWN_ENTITY_TAG_COMPONENT_ID };
 	AuthoritySelfQuery.Constraint.bSelfConstraint = true;
 	AddComponentQueryPairToInterestComponent(ServerInterest, SpatialConstants::SERVER_WORKER_COMPONENT_ID, AuthoritySelfQuery);
 
@@ -138,7 +140,7 @@ Interest InterestFactory::CreateServerWorkerInterest(const UAbstractLBStrategy* 
 	if (bDebug)
 	{
 		ServerQuery = Query();
-		ServerQuery.ResultComponentSetIds = SchemaResultType{ SpatialConstants::GDK_DEBUG_COMPONENT_ID };
+		ServerQuery.ResultComponentIds = { SpatialConstants::GDK_DEBUG_COMPONENT_ID };
 		ServerQuery.Constraint.ComponentConstraint = SpatialConstants::GDK_DEBUG_COMPONENT_ID;
 		AddComponentQueryPairToInterestComponent(ServerInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerQuery);
 	}
@@ -159,7 +161,8 @@ void InterestFactory::AddLoadBalancingInterestQuery(const UAbstractLBStrategy* L
 {
 	// Add load balancing query
 	Query PartitionQuery{};
-	PartitionQuery.ResultComponentSetIds = InterestFactory::ServerNonAuthInterestResultType;
+	PartitionQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+	PartitionQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 	PartitionQuery.Constraint = LBStrategy->GetWorkerInterestQueryConstraint(VirtualWorker);
 	AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, PartitionQuery);
 }
@@ -190,7 +193,7 @@ Interest InterestFactory::CreateInterest(AActor* InActor, const FClassInfo& InIn
 
 void InterestFactory::AddPlayerControllerActorInterest(Interest& OutInterest, const AActor* InActor, const FClassInfo& InInfo) const
 {
-	QueryConstraint LevelConstraint = CreateLevelConstraints(InActor);
+	const QueryConstraint LevelConstraint = CreateLevelConstraints(InActor);
 
 	AddAlwaysRelevantAndInterestedQuery(OutInterest, InActor, InInfo, LevelConstraint);
 
@@ -208,7 +211,8 @@ void InterestFactory::AddClientSelfInterest(Interest& OutInterest) const
 	Query NewQuery;
 	// Just an entity ID constraint is fine, as clients should not become authoritative over entities outside their loaded levels
 	NewQuery.Constraint.bSelfConstraint = true;
-	NewQuery.ResultComponentSetIds = ClientAuthInterestResultType;
+	NewQuery.ResultComponentIds = ClientAuthInterestResultType.ComponentIds;
+	NewQuery.ResultComponentSetIds = ClientAuthInterestResultType.ComponentSetsIds;
 
 	AddComponentQueryPairToInterestComponent(
 		OutInterest, SpatialConstants::GetClientAuthorityComponent(GetDefault<USpatialGDKSettings>()->UseRPCRingBuffer()), NewQuery);
@@ -219,15 +223,16 @@ void InterestFactory::AddServerSelfInterest(Interest& OutInterest) const
 	// Add a query for components all servers need to read client data
 	Query ClientQuery;
 	ClientQuery.Constraint.bSelfConstraint = true;
-	ClientQuery.ResultComponentSetIds = ServerAuthInterestResultType;
+	ClientQuery.ResultComponentIds = ServerAuthInterestResultType.ComponentIds;
+	ClientQuery.ResultComponentSetIds = ServerAuthInterestResultType.ComponentSetsIds;
 	AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ClientQuery);
 
 	// Add a query for the load balancing worker (whoever is delegated the auth delegation component) to read the authority intent
 	Query LoadBalanceQuery;
 	LoadBalanceQuery.Constraint.bSelfConstraint = true;
-	LoadBalanceQuery.ResultComponentSetIds =
-		SchemaResultType{ SpatialConstants::AUTHORITY_INTENT_COMPONENT_ID, SpatialConstants::NET_OWNING_CLIENT_WORKER_COMPONENT_ID,
-						  SpatialConstants::LB_TAG_COMPONENT_ID };
+	LoadBalanceQuery.ResultComponentSetIds = { SpatialConstants::AUTHORITY_INTENT_COMPONENT_ID,
+											   SpatialConstants::NET_OWNING_CLIENT_WORKER_COMPONENT_ID,
+											   SpatialConstants::LB_TAG_COMPONENT_ID };
 	AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, LoadBalanceQuery);
 }
 
@@ -270,7 +275,8 @@ void InterestFactory::AddOwnerInterestOnServer(Interest& OutInterest, const AAct
 
 	if (OwnerChainQuery.Constraint.OrConstraint.Num() != 0)
 	{
-		OwnerChainQuery.ResultComponentSetIds = ServerNonAuthInterestResultType;
+		OwnerChainQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+		OwnerChainQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 		AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, OwnerChainQuery);
 	}
 }
@@ -302,7 +308,8 @@ void InterestFactory::AddAlwaysRelevantAndInterestedQuery(Interest& OutInterest,
 
 	Query ClientSystemQuery;
 	ClientSystemQuery.Constraint = SystemAndLevelConstraint;
-	ClientSystemQuery.ResultComponentSetIds = ClientNonAuthInterestResultType;
+	ClientSystemQuery.ResultComponentIds = ClientNonAuthInterestResultType.ComponentIds;
+	ClientSystemQuery.ResultComponentSetIds = ClientNonAuthInterestResultType.ComponentSetsIds;
 
 	AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::GetClientAuthorityComponent(Settings->UseRPCRingBuffer()),
 											 ClientSystemQuery);
@@ -316,7 +323,8 @@ void InterestFactory::AddAlwaysRelevantAndInterestedQuery(Interest& OutInterest,
 		QueryConstraint ServerSystemConstraint;
 		ServerSystemConstraint.OrConstraint.Add(AlwaysInterestedConstraint);
 		ServerSystemQuery.Constraint = ServerSystemConstraint;
-		ServerSystemQuery.ResultComponentSetIds = ServerNonAuthInterestResultType;
+		ServerSystemQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+		ServerSystemQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 
 		AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerSystemQuery);
 	}
@@ -363,7 +371,8 @@ void InterestFactory::AddUserDefinedQueries(Interest& OutInterest, const AActor*
 		// We enforce result type even for user defined queries. Here we are assuming what a user wants from their defined
 		// queries are for their players to check out more actors than they normally would, so use the client non auth result type,
 		// which includes all components required for a client to see non-authoritative actors.
-		UserQuery.ResultComponentSetIds = ClientNonAuthInterestResultType;
+		UserQuery.ResultComponentIds = ClientNonAuthInterestResultType.ComponentIds;
+		UserQuery.ResultComponentSetIds = ClientNonAuthInterestResultType.ComponentSetsIds;
 
 		AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::GetClientAuthorityComponent(Settings->UseRPCRingBuffer()),
 												 UserQuery);
@@ -376,7 +385,8 @@ void InterestFactory::AddUserDefinedQueries(Interest& OutInterest, const AActor*
 			Query ServerUserQuery;
 			ServerUserQuery.Constraint = UserConstraint;
 			ServerUserQuery.Frequency = FrequencyToConstraints.Key;
-			ServerUserQuery.ResultComponentSetIds = ServerNonAuthInterestResultType;
+			ServerUserQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+			ServerUserQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 
 			AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerUserQuery);
 		}
@@ -467,7 +477,8 @@ void InterestFactory::AddNetCullDistanceQueries(Interest& OutInterest, const Que
 		NewQuery.Constraint.AndConstraint.Add(VisibilityConstraint);
 
 		NewQuery.Frequency = CheckoutRadiusConstraintFrequencyPair.Frequency;
-		NewQuery.ResultComponentSetIds = ClientNonAuthInterestResultType;
+		NewQuery.ResultComponentIds = ClientNonAuthInterestResultType.ComponentIds;
+		NewQuery.ResultComponentSetIds = ClientNonAuthInterestResultType.ComponentSetsIds;
 
 		AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::GetClientAuthorityComponent(Settings->UseRPCRingBuffer()),
 												 NewQuery);
@@ -478,7 +489,8 @@ void InterestFactory::AddNetCullDistanceQueries(Interest& OutInterest, const Que
 			Query ServerQuery;
 			ServerQuery.Constraint = CheckoutRadiusConstraintFrequencyPair.Constraint;
 			ServerQuery.Frequency = CheckoutRadiusConstraintFrequencyPair.Frequency;
-			ServerQuery.ResultComponentSetIds = ServerNonAuthInterestResultType;
+			ServerQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+			ServerQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 
 			AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerQuery);
 		}

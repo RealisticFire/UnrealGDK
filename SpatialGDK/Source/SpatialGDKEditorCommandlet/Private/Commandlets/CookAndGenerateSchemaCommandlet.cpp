@@ -153,10 +153,20 @@ int32 UCookAndGenerateSchemaCommandlet::Main(const FString& CmdLineParams)
 	USchemaDatabase* SchemaDatabase = InitialiseSchemaDatabase(SpatialConstants::SCHEMA_DATABASE_ASSET_PATH);
 
 	// Needs to happen before RunSchemaCompiler
-	WriteServerAuthorityComponentSet(SchemaDatabase);
+	// We construct the list of all server authoritative components while writing the file.
+	TArray<Worker_ComponentId> GeneratedServerAuthoritativeComponentIds{};
+	WriteServerAuthorityComponentSet(SchemaDatabase, GeneratedServerAuthoritativeComponentIds);
+	WriteClientAuthorityComponentSet();
 	WriteComponentSetBySchemaType(SchemaDatabase, SCHEMA_Data);
 	WriteComponentSetBySchemaType(SchemaDatabase, SCHEMA_OwnerOnly);
 	WriteComponentSetBySchemaType(SchemaDatabase, SCHEMA_Handover);
+
+	// Finish initializing the schema database through updating the server authoritative component set.
+	for (const auto& ComponentId : GeneratedServerAuthoritativeComponentIds)
+	{
+		SchemaDatabase->ComponentSetIdToComponentIds.FindOrAdd(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
+			.ComponentIDs.Push(ComponentId);
+	}
 
 	if (!RunSchemaCompiler())
 	{

@@ -59,9 +59,10 @@ SPATIALGDKEDITOR_API void CopyWellKnownSchemaFiles(const FString& GDKSchemaCopyD
 
 SPATIALGDKEDITOR_API bool RunSchemaCompiler();
 
-SPATIALGDKEDITOR_API void WriteComponentSetToFile(FCodeWriter& Writer, const FString& ComponentName, Worker_ComponentId ComponentId);
+SPATIALGDKEDITOR_API void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase,
+														   TArray<Worker_ComponentId>& ServerAuthoritativeComponentIds);
 
-SPATIALGDKEDITOR_API void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase);
+SPATIALGDKEDITOR_API void WriteClientAuthorityComponentSet();
 
 SPATIALGDKEDITOR_API void WriteComponentSetBySchemaType(const USchemaDatabase* SchemaDatabase, ESchemaComponentType SchemaType);
 

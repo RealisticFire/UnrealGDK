@@ -104,11 +104,13 @@ const Worker_ComponentId HEARTBEAT_COMPONENT_ID = 9991;
 const Worker_ComponentSetId GDK_WELL_KNOWN_COMPONENT_SET_ID = 9999;
 
 const Worker_ComponentId SERVER_AUTH_COMPONENT_SET_ID = 9900;
-const Worker_ComponentId DATA_COMPONENT_SET_ID = 9901;
-const Worker_ComponentId OWNER_ONLY_COMPONENT_SET_ID = 9902;
-const Worker_ComponentId HANDOVER_COMPONENT_SET_ID = 9903;
+const Worker_ComponentId CLIENT_AUTH_COMPONENT_SET_ID = 9901;
+const Worker_ComponentId DATA_COMPONENT_SET_ID = 9902;
+const Worker_ComponentId OWNER_ONLY_COMPONENT_SET_ID = 9903;
+const Worker_ComponentId HANDOVER_COMPONENT_SET_ID = 9904;
 
 const FString SERVER_AUTH_COMPONENT_SET_NAME = TEXT("ServerAuthoritativeComponentSet");
+const FString CLIENT_AUTH_COMPONENT_SET_NAME = TEXT("ClientAuthoritativeComponentSet");
 const FString DATA_COMPONENT_SET_NAME = TEXT("DataComponentSet");
 const FString OWNER_ONLY_COMPONENT_SET_NAME = TEXT("OwnerOnlyComponentSet");
 const FString HANDOVER_COMPONENT_SET_NAME = TEXT("HandoverComponentSet");
@@ -428,6 +430,66 @@ inline Worker_ComponentId GetClientAuthorityComponent(bool bUsingRingBuffers)
 {
 	return bUsingRingBuffers ? CLIENT_ENDPOINT_COMPONENT_ID : CLIENT_RPC_ENDPOINT_COMPONENT_ID_LEGACY;
 }
+
+const TArray<FString> ServerAuthorityWellKnownSchemaImports = {
+	"improbable/standard_library.schema",
+	"unreal/gdk/authority_intent.schema",
+	"unreal/gdk/debug_component.schema",
+	"unreal/gdk/debug_metrics.schema",
+	"unreal/gdk/global_state_manager.schema",
+	"unreal/gdk/net_owning_client_worker.schema",
+	"unreal/gdk/not_streamed.schema",
+	"unreal/gdk/query_tags.schema",
+	"unreal/gdk/relevant.schema",
+	"unreal/gdk/rpc_components.schema",
+	"unreal/gdk/server_worker.schema",
+	"unreal/gdk/spatial_debugging.schema",
+	"unreal/gdk/spawndata.schema",
+	"unreal/gdk/spawner.schema",
+	"unreal/gdk/tombstone.schema",
+	"unreal/gdk/unreal_metadata.schema",
+	"unreal/gdk/virtual_worker_translation.schema",
+	"unreal/generated/rpc_endpoints.schema",
+	"unreal/generated/NetCullDistance/ncdcomponents.schema",
+};
+
+const TMap<Worker_ComponentId, FString> ServerAuthorityWellKnownComponents = {
+	{ POSITION_COMPONENT_ID, "improbable.Position" },
+	{ INTEREST_COMPONENT_ID, "improbable.Interest" },
+	{ AUTHORITY_DELEGATION_COMPONENT_ID, "improbable.AuthorityDelegation" },
+	{ AUTHORITY_INTENT_COMPONENT_ID, "unreal.AuthorityIntent" },
+	{ GDK_DEBUG_COMPONENT_ID, "unreal.DebugComponent" },
+	{ DEBUG_METRICS_COMPONENT_ID, "unreal.DebugMetrics" },
+	{ DEPLOYMENT_MAP_COMPONENT_ID, "unreal.DeploymentMap" },
+	{ STARTUP_ACTOR_MANAGER_COMPONENT_ID, "unreal.StartupActorManager" },
+	{ GSM_SHUTDOWN_COMPONENT_ID, "unreal.GSMShutdown" },
+	{ NET_OWNING_CLIENT_WORKER_COMPONENT_ID, "unreal.NetOwningClientWorker" },
+	{ NOT_STREAMED_COMPONENT_ID, "unreal.NotStreamed" },
+	{ ALWAYS_RELEVANT_COMPONENT_ID, "unreal.AlwaysRelevant" },
+	{ DORMANT_COMPONENT_ID, "unreal.Dormant" },
+	{ VISIBLE_COMPONENT_ID, "unreal.Visible" },
+	{ SERVER_RPC_ENDPOINT_COMPONENT_ID_LEGACY, "unreal.UnrealServerRPCEndpointLegacy" },
+	{ SERVER_TO_SERVER_COMMAND_ENDPOINT_COMPONENT_ID, "unreal.UnrealServerToServerCommandEndpoint" },
+	{ MULTICAST_RPCS_COMPONENT_ID, "unreal.UnrealMulticastRPCEndpointLegacy" },
+	{ RPCS_ON_ENTITY_CREATION_ID, "unreal.RPCsOnEntityCreation" },
+	{ SERVER_WORKER_COMPONENT_ID, "unreal.ServerWorker" },
+	{ SPATIAL_DEBUGGING_COMPONENT_ID, "unreal.SpatialDebugging" },
+	{ SPAWN_DATA_COMPONENT_ID, "unreal.SpawnData" },
+	{ PLAYER_SPAWNER_COMPONENT_ID, "unreal.PlayerSpawner" },
+	{ TOMBSTONE_COMPONENT_ID, "unreal.Tombstone" },
+	{ UNREAL_METADATA_COMPONENT_ID, "unreal.UnrealMetadata" },
+	{ VIRTUAL_WORKER_TRANSLATION_COMPONENT_ID, "unreal.VirtualWorkerTranslation" },
+	{ SERVER_ENDPOINT_COMPONENT_ID, "unreal.generated.UnrealServerEndpoint" },
+};
+
+const TArray<FString> ClientAuthorityWellKnownSchemaImports = { "unreal/gdk/heartbeat.schema", "unreal/gdk/rpc_components.schema",
+																"unreal/generated/rpc_endpoints.schema" };
+
+const TMap<Worker_ComponentId, FString> ClientAuthorityWellKnownComponents = {
+	{ HEARTBEAT_COMPONENT_ID, "unreal.Heartbeat" },
+	{ CLIENT_ENDPOINT_COMPONENT_ID, "unreal.generated.UnrealClientEndpoint" },
+	{ CLIENT_RPC_ENDPOINT_COMPONENT_ID_LEGACY, "unreal.UnrealClientRPCEndpointLegacy" },
+};
 
 } // namespace SpatialConstants
 

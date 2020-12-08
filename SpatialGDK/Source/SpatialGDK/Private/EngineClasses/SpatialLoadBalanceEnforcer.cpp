@@ -94,41 +94,17 @@ Worker_ComponentUpdate SpatialLoadBalanceEnforcer::CreateAuthorityDelegationUpda
 {
 	LBComponents& Components = DataStore[EntityId];
 
-	const AuthorityIntent& AuthorityIntentComponent = Components.Intent;
-	const NetOwningClientWorker& NetOwningClientWorker = Components.OwningClientWorker;
-
-	AuthorityDelegation& AuthorityDelegationComponent = Components.Delegation;
-
 	const Worker_PartitionId AuthoritativeServerPartition =
-		VirtualWorkerTranslator->GetPartitionEntityForVirtualWorker(AuthorityIntentComponent.VirtualWorkerId);
+		VirtualWorkerTranslator->GetPartitionEntityForVirtualWorker(Components.Intent.VirtualWorkerId);
 
+	const NetOwningClientWorker& NetOwningClientWorker = Components.OwningClientWorker;
 	const Worker_PartitionId ClientWorkerPartitionId = NetOwningClientWorker.ClientPartitionId.IsSet()
 														   ? NetOwningClientWorker.ClientPartitionId.GetValue()
 														   : SpatialConstants::INVALID_PARTITION_ID;
 
-	TArray<Worker_ComponentId> ComponentIds;
-	AuthorityDelegationComponent.Delegations.GetKeys(ComponentIds);
-
-	for (const Worker_ComponentId ComponentId : ComponentIds)
-	{
-		switch (ComponentId)
-		{
-		case SpatialConstants::HEARTBEAT_COMPONENT_ID:
-		case SpatialConstants::CLIENT_RPC_ENDPOINT_COMPONENT_ID_LEGACY:
-		case SpatialConstants::CLIENT_ENDPOINT_COMPONENT_ID:
-			AuthorityDelegationComponent.Delegations.Add(ComponentId, ClientWorkerPartitionId);
-			break;
-		case SpatialConstants::POSITION_COMPONENT_ID:
-		case SpatialConstants::INTEREST_COMPONENT_ID:
-		case SpatialConstants::AUTHORITY_DELEGATION_COMPONENT_ID:
-		case SpatialConstants::METADATA_COMPONENT_ID:
-		case SpatialConstants::PERSISTENCE_COMPONENT_ID:
-			break;
-		default:
-			AuthorityDelegationComponent.Delegations.Add(ComponentId, AuthoritativeServerPartition);
-			break;
-		}
-	}
+	AuthorityDelegation& AuthorityDelegationComponent = Components.Delegation;
+	AuthorityDelegationComponent.Delegations.Add(SpatialConstants::CLIENT_AUTH_COMPONENT_SET_ID, ClientWorkerPartitionId);
+	AuthorityDelegationComponent.Delegations.Add(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID, AuthoritativeServerPartition);
 
 	return AuthorityDelegationComponent.CreateAuthorityDelegationUpdate();
 }

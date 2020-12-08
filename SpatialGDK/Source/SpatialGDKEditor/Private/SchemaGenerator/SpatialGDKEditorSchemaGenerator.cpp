@@ -60,8 +60,11 @@ TMap<FString, TSet<FString>> PotentialSchemaNameCollisions;
 // QBI
 TMap<float, Worker_ComponentId> NetCullDistanceToComponentId;
 
+namespace
+{
 const FString RelativeSchemaDatabaseFilePath = FPaths::SetExtension(
 	FPaths::Combine(FPaths::ProjectContentDir(), SpatialConstants::SCHEMA_DATABASE_FILE_PATH), FPackageName::GetAssetPackageExtension());
+}
 
 namespace SpatialGDKEditor
 {
@@ -280,8 +283,6 @@ void WriteLevelComponent(FCodeWriter& Writer, const FString& LevelName, Worker_C
 	Writer.Indent();
 	Writer.Printf("id = {0};", ComponentId);
 	Writer.Outdent().Print("}");
-
-	WriteComponentSetToFile(Writer, ComponentName, ComponentId);
 }
 
 TMultiMap<FName, FName> GetLevelNamesToPathsMap()
@@ -407,8 +408,6 @@ void GenerateSchemaForNCDs(const FString& SchemaOutputPath)
 		Writer.Indent();
 		Writer.Printf("id = {0};", ComponentId);
 		Writer.Outdent().Print("}");
-
-		WriteComponentSetToFile(Writer, SchemaComponentName, ComponentId);
 	}
 
 	NextAvailableComponentId = IdGenerator.Peek();
@@ -500,7 +499,7 @@ FString GetComponentSetOutputPathBySchemaType(ESchemaComponentType SchemaType)
 						   *ComponentSetName);
 }
 
-void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
+void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase, TArray<Worker_ComponentId>& ServerAuthoritativeComponentIds)
 {
 	const FString SchemaOutputPath = GetDefault<USpatialGDKEditorSettings>()->GetGeneratedSchemaOutputFolder();
 
@@ -513,6 +512,12 @@ void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
 
 	// Write all import statements.
 	{
+		// Well-known SpatialOS and handwritten GDK schema files.
+		for (const auto& WellKnownSchemaImport : SpatialConstants::ServerAuthorityWellKnownSchemaImports)
+		{
+			Writer.Printf("import \"{0}\";", WellKnownSchemaImport);
+		}
+
 		const FString IncludePath = TEXT("unreal/generated");
 		for (const auto& GeneratedActorClass : SchemaDatabase->ActorClassPathToSchema)
 		{
@@ -523,6 +528,7 @@ void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
 				Writer.Printf("import \"{0}/{1}Components.schema\";", IncludePath, ActorClassName);
 			}
 		}
+
 		for (const auto& GeneratedSubObjectClass : SchemaDatabase->SubobjectClassPathToSchema)
 		{
 			const FString SubObjectClassName = UnrealNameToSchemaName(GeneratedSubObjectClass.Value.GeneratedSchemaName);
@@ -537,12 +543,26 @@ void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
 
 	// Write all components.
 	{
+		// Well-known SpatialOS and handwritten GDK components.
+		for (const auto& WellKnownComponent : SpatialConstants::ServerAuthorityWellKnownComponents)
+		{
+			Writer.Printf("{0},", WellKnownComponent.Value);
+		}
+
+		// NCDs.
+		for (auto& NCDComponent : NetCullDistanceToComponentId)
+		{
+			const FString NcdComponentName = FString::Printf(TEXT("NetCullDistanceSquared%lld"), static_cast<uint64>(NCDComponent.Key));
+			Writer.Printf("unreal.ncdcomponents.{0},", NcdComponentName);
+		}
+
 		for (const auto& GeneratedActorClass : SchemaDatabase->ActorClassPathToSchema)
 		{
 			// Actor components.
 			const FString& ActorClassName = UnrealNameToSchemaComponentName(GeneratedActorClass.Value.GeneratedSchemaName);
 			ForAllSchemaComponentTypes([&](ESchemaComponentType SchemaType) {
 				const Worker_ComponentId ComponentId = GeneratedActorClass.Value.SchemaComponents[SchemaType];
+				ServerAuthoritativeComponentIds.Push(ComponentId);
 				if (ComponentId != 0)
 				{
 					switch (SchemaType)
@@ -561,12 +581,14 @@ void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
 					}
 				}
 			});
+
 			// Actor static subobjects.
 			for (const auto& ActorSubObjectData : GeneratedActorClass.Value.SubobjectData)
 			{
 				const FString ActorSubObjectName = UnrealNameToSchemaComponentName(ActorSubObjectData.Value.Name.ToString());
 				ForAllSchemaComponentTypes([&](ESchemaComponentType SchemaType) {
 					const Worker_ComponentId& ComponentId = ActorSubObjectData.Value.SchemaComponents[SchemaType];
+					ServerAuthoritativeComponentIds.Push(ComponentId);
 					if (ComponentId != 0)
 					{
 						switch (SchemaType)
@@ -587,6 +609,7 @@ void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
 				});
 			}
 		}
+
 		// Dynamic subobjects.
 		for (const auto& GeneratedSubObjectClass : SchemaDatabase->SubobjectClassPathToSchema)
 		{
@@ -598,6 +621,7 @@ void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
 					GeneratedSubObjectClass.Value.DynamicSubobjectComponents[SubObjectNumber];
 				ForAllSchemaComponentTypes([&](ESchemaComponentType SchemaType) {
 					const Worker_ComponentId& ComponentId = SubObjectSchemaData.SchemaComponents[SchemaType];
+					ServerAuthoritativeComponentIds.Push(ComponentId);
 					if (ComponentId != 0)
 					{
 						switch (SchemaType)
@@ -626,6 +650,42 @@ void WriteServerAuthorityComponentSet(const USchemaDatabase* SchemaDatabase)
 	Writer.Outdent().Print("}");
 
 	Writer.WriteToFile(FString::Printf(TEXT("%sComponentSets/ServerAuthoritativeComponentSet.schema"), *SchemaOutputPath));
+}
+
+void WriteClientAuthorityComponentSet()
+{
+	const FString SchemaOutputPath = GetDefault<USpatialGDKEditorSettings>()->GetGeneratedSchemaOutputFolder();
+
+	FCodeWriter Writer;
+	Writer.Printf(R"""(
+		// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+		// Note that this file has been generated automatically
+		package unreal.generated;)""");
+	Writer.PrintNewLine();
+
+	// Write all import statements.
+	for (const auto& WellKnownSchemaImport : SpatialConstants::ClientAuthorityWellKnownSchemaImports)
+	{
+		Writer.Printf("import \"{0}\";", WellKnownSchemaImport);
+	}
+
+	Writer.PrintNewLine();
+	Writer.Printf("component_set {0} {", SpatialConstants::CLIENT_AUTH_COMPONENT_SET_NAME).Indent();
+	Writer.Printf("id = {0};", SpatialConstants::CLIENT_AUTH_COMPONENT_SET_ID);
+	Writer.Printf("components = [").Indent();
+
+	// Write all import components.
+	for (const auto& WellKnownComponent : SpatialConstants::ClientAuthorityWellKnownComponents)
+	{
+		Writer.Printf("{0},", WellKnownComponent.Value);
+	}
+
+	Writer.RemoveTrailingComma();
+
+	Writer.Outdent().Print("];");
+	Writer.Outdent().Print("}");
+
+	Writer.WriteToFile(FString::Printf(TEXT("%sComponentSets/ClientAuthoritativeComponentSet.schema"), *SchemaOutputPath));
 }
 
 void WriteComponentSetBySchemaType(const USchemaDatabase* SchemaDatabase, ESchemaComponentType SchemaType)
@@ -794,6 +854,23 @@ USchemaDatabase* InitialiseSchemaDatabase(const FString& PackagePath)
 
 	SchemaDatabase->LevelComponentIds.Reset(LevelPathToComponentId.Num());
 	LevelPathToComponentId.GenerateValueArray(SchemaDatabase->LevelComponentIds);
+
+	SchemaDatabase->ComponentSetIdToComponentIds.Reset();
+	for (const auto& WellKnownComponent : SpatialConstants::ServerAuthorityWellKnownComponents)
+	{
+		SchemaDatabase->ComponentSetIdToComponentIds.FindOrAdd(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
+			.ComponentIDs.Push(WellKnownComponent.Key);
+	}
+	for (const auto& WellKnownComponent : SpatialConstants::ClientAuthorityWellKnownComponents)
+	{
+		SchemaDatabase->ComponentSetIdToComponentIds.FindOrAdd(SpatialConstants::CLIENT_AUTH_COMPONENT_SET_ID)
+			.ComponentIDs.Push(WellKnownComponent.Key);
+	}
+	for (auto& NCDComponent : NetCullDistanceToComponentId)
+	{
+		SchemaDatabase->ComponentSetIdToComponentIds.FindOrAdd(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
+			.ComponentIDs.Append(NetCullDistanceComponentIds);
+	}
 
 	return SchemaDatabase;
 }
@@ -1258,17 +1335,6 @@ bool RunSchemaCompiler()
 	}
 }
 
-void WriteComponentSetToFile(FCodeWriter& Writer, const FString& ComponentName, Worker_ComponentId ComponentId)
-{
-	Writer.PrintNewLine();
-	Writer.Printf("component_set {0}Set {", *ComponentName).Indent();
-	Writer.Printf("id = {0};", ComponentId);
-	Writer.Printf("components = [").Indent();
-	Writer.Printf("{0}", *ComponentName);
-	Writer.Outdent().Print("];");
-	Writer.Outdent().Print("}");
-}
-
 bool SpatialGDKGenerateSchema()
 {
 	SchemaGeneratedClasses.Empty();
@@ -1290,10 +1356,20 @@ bool SpatialGDKGenerateSchema()
 	USchemaDatabase* SchemaDatabase = InitialiseSchemaDatabase(SpatialConstants::SCHEMA_DATABASE_ASSET_PATH);
 
 	// Needs to happen before RunSchemaCompiler
-	WriteServerAuthorityComponentSet(SchemaDatabase);
+	// We construct the list of all server authoritative components while writing the file.
+	TArray<Worker_ComponentId> GeneratedServerAuthoritativeComponentIds{};
+	WriteServerAuthorityComponentSet(SchemaDatabase, GeneratedServerAuthoritativeComponentIds);
+	WriteClientAuthorityComponentSet();
 	WriteComponentSetBySchemaType(SchemaDatabase, SCHEMA_Data);
 	WriteComponentSetBySchemaType(SchemaDatabase, SCHEMA_OwnerOnly);
 	WriteComponentSetBySchemaType(SchemaDatabase, SCHEMA_Handover);
+
+	// Finish initializing the schema database through updating the server authoritative component set.
+	for (const auto& ComponentId : GeneratedServerAuthoritativeComponentIds)
+	{
+		SchemaDatabase->ComponentSetIdToComponentIds.FindOrAdd(SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
+			.ComponentIDs.Push(ComponentId);
+	}
 
 	if (!RunSchemaCompiler())
 	{

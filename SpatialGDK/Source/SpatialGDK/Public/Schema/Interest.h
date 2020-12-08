@@ -7,7 +7,12 @@
 namespace SpatialGDK
 {
 using EdgeLength = Coordinates;
-using SchemaResultType = TArray<Worker_ComponentId>;
+
+struct SchemaResultType
+{
+	TArray<Worker_ComponentId> ComponentIds;
+	TArray<Worker_ComponentId> ComponentSetsIds;
+};
 
 struct SphereConstraint
 {
@@ -117,8 +122,9 @@ struct Query
 	QueryConstraint Constraint;
 
 	// Either full_snapshot_result or a list of result_component_id should be provided. Providing both is invalid.
-	TSchemaOption<bool> FullSnapshotResult; // Whether all components should be included or none.
-	SchemaResultType ResultComponentSetIds; // Which components should be included.
+	TSchemaOption<bool> FullSnapshotResult;			  // Whether all components should be included or none.
+	TArray<Worker_ComponentId> ResultComponentIds;	  // Which components should be included.
+	TArray<Worker_ComponentId> ResultComponentSetIds; // Which component sets should be included.
 
 	// Used for frequency-based rate limiting. Represents the maximum frequency of updates for this
 	// particular query. An empty option represents no rate-limiting (ie. updates are received
@@ -259,14 +265,19 @@ inline void AddQueryToComponentInterestSchema(Schema_Object* ComponentInterestOb
 		Schema_AddBool(QueryObject, 2, *Query.FullSnapshotResult);
 	}
 
-	for (uint32 ComponentId : Query.ResultComponentSetIds)
+	for (uint32 ComponentId : Query.ResultComponentIds)
 	{
-		Schema_AddUint32(QueryObject, 5, ComponentId);
+		Schema_AddUint32(QueryObject, 3, ComponentId);
 	}
 
 	if (Query.Frequency.IsSet())
 	{
 		Schema_AddFloat(QueryObject, 4, *Query.Frequency);
+	}
+
+	for (uint32 ComponentSetId : Query.ResultComponentSetIds)
+	{
+		Schema_AddUint32(QueryObject, 5, ComponentSetId);
 	}
 }
 
