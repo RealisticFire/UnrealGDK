@@ -105,18 +105,10 @@ Worker_ComponentUpdate InterestFactory::CreateInterestUpdate(AActor* InActor, co
 
 Interest InterestFactory::CreateServerWorkerInterest(const UAbstractLBStrategy* LBStrategy) const
 {
-	const USpatialGDKSettings* SpatialGDKSettings = GetDefault<USpatialGDKSettings>();
-
 	// Build the Interest component as we go by updating the component-> query list mappings.
 	Interest ServerInterest;
 
 	Query ServerQuery{};
-
-	// Ensure server worker receives AlwaysRelevant entities.
-	ServerQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
-	ServerQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
-	ServerQuery.Constraint = CreateAlwaysRelevantConstraint();
-	AddComponentQueryPairToInterestComponent(ServerInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerQuery);
 
 	// Workers have interest in all system worker entities.
 	ServerQuery = Query();
@@ -132,7 +124,8 @@ Interest InterestFactory::CreateServerWorkerInterest(const UAbstractLBStrategy* 
 
 	// Ensure server worker receives core GDK snapshot entities.
 	ServerQuery = Query();
-	ServerQuery.ResultComponentIds = ServerNonAuthInterestResultType;
+	ServerQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+	ServerQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 	ServerQuery.Constraint = CreateGDKSnapshotEntitiesConstraint();
 	AddComponentQueryPairToInterestComponent(ServerInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, ServerQuery);
 
@@ -149,7 +142,8 @@ Interest InterestFactory::CreatePartitionInterest(const UAbstractLBStrategy* LBS
 
 	// Ensure server worker receives AlwaysRelevant entities.
 	PartitionQuery = Query();
-	PartitionQuery.ResultComponentIds = ServerNonAuthInterestResultType;
+	PartitionQuery.ResultComponentIds = ServerNonAuthInterestResultType.ComponentIds;
+	PartitionQuery.ResultComponentSetIds = ServerNonAuthInterestResultType.ComponentSetsIds;
 	PartitionQuery.Constraint = CreateServerAlwaysRelevantConstraint();
 	AddComponentQueryPairToInterestComponent(PartitionInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, PartitionQuery);
 
@@ -163,7 +157,7 @@ Interest InterestFactory::CreatePartitionInterest(const UAbstractLBStrategy* LBS
 	if (bDebug)
 	{
 		PartitionQuery = Query();
-		PartitionQuery.ResultComponentIds = SchemaResultType{ SpatialConstants::GDK_DEBUG_COMPONENT_ID };
+		PartitionQuery.ResultComponentIds = { SpatialConstants::GDK_DEBUG_COMPONENT_ID };
 		PartitionQuery.Constraint.ComponentConstraint = SpatialConstants::GDK_DEBUG_COMPONENT_ID;
 		AddComponentQueryPairToInterestComponent(PartitionInterest, SpatialConstants::WELL_KNOWN_COMPONENT_SET_ID, PartitionQuery);
 	}
