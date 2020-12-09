@@ -9,7 +9,7 @@
 #include "SpatialView/ConnectionHandler/SpatialOSConnectionHandler.h"
 
 DEFINE_LOG_CATEGORY(LogSpatialWorkerConnection);
-
+#pragma optimize("", off)
 namespace
 {
 SpatialGDK::ComponentData ToComponentData(FWorkerComponentData* Data)
@@ -310,7 +310,9 @@ void USpatialWorkerConnection::ExtractStartupOps(SpatialGDK::OpList& OpList, Spa
 			}
 			break;
 		case WORKER_OP_TYPE_COMPONENT_SET_AUTHORITY_CHANGE:
-			if (IsStartupComponent(Op.op.component_set_authority_change.component_set_id))
+			// if (IsStartupComponent(Op.op.component_set_authority_change.component_set_id))
+			// TODO: ugh, need a way of uniquely identifying startup entities, might need to use a different component set
+			// if (Op.op.component_set_authority_change.entity_id <= 5)
 			{
 				ExtractedOpList.AddOp(Op);
 			}
@@ -340,3 +342,4 @@ void USpatialWorkerConnection::ExtractStartupOps(SpatialGDK::OpList& OpList, Spa
 		}
 	}
 }
+#pragma optimize("", on)

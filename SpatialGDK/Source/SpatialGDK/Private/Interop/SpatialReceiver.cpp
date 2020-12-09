@@ -547,7 +547,7 @@ void USpatialReceiver::HandlePlayerLifecycleAuthority(const Worker_ComponentSetA
 	// Server initializes heartbeat logic based on its authority over the position component,
 	// client does the same for heartbeat component
 	if ((NetDriver->IsServer() && Op.component_set_id == SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
-		|| (!NetDriver->IsServer() && Op.component_set_id == SpatialConstants::HEARTBEAT_COMPONENT_ID))
+		|| (!NetDriver->IsServer() && Op.component_set_id == SpatialConstants::CLIENT_AUTH_COMPONENT_SET_ID))
 	{
 		if (Op.authority == WORKER_AUTHORITY_AUTHORITATIVE)
 		{
@@ -577,7 +577,7 @@ void USpatialReceiver::HandlePlayerLifecycleAuthority(const Worker_ComponentSetA
 void USpatialReceiver::HandleActorAuthority(const Worker_ComponentSetAuthorityChangeOp& Op)
 {
 	if (NetDriver->SpatialDebugger != nullptr && Op.authority == WORKER_AUTHORITY_AUTHORITATIVE
-		&& Op.component_set_id == SpatialConstants::AUTHORITY_INTENT_COMPONENT_ID)
+		&& Op.component_set_id == SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
 	{
 		NetDriver->SpatialDebugger->ActorAuthorityChanged(Op);
 	}
@@ -599,8 +599,7 @@ void USpatialReceiver::HandleActorAuthority(const Worker_ComponentSetAuthorityCh
 		{
 			Channel->SetServerAuthority(Op.authority == WORKER_AUTHORITY_AUTHORITATIVE);
 		}
-		else if (Op.component_set_id
-				 == SpatialConstants::GetClientAuthorityComponent(GetDefault<USpatialGDKSettings>()->UseRPCRingBuffer()))
+		else if (Op.component_set_id == SpatialConstants::CLIENT_AUTH_COMPONENT_SET_ID)
 		{
 			Channel->SetClientAuthority(Op.authority == WORKER_AUTHORITY_AUTHORITATIVE);
 		}
@@ -734,7 +733,7 @@ void USpatialReceiver::HandleActorAuthority(const Worker_ComponentSetAuthorityCh
 			PendingEntitySubobjectDelegations.Remove(EntityComponentPair);
 		}
 	}
-	else if (Op.component_set_id == SpatialConstants::GetClientAuthorityComponent(GetDefault<USpatialGDKSettings>()->UseRPCRingBuffer()))
+	else if (Op.component_set_id == SpatialConstants::CLIENT_AUTH_COMPONENT_SET_ID)
 	{
 		if (Channel != nullptr)
 		{
@@ -749,7 +748,7 @@ void USpatialReceiver::HandleActorAuthority(const Worker_ComponentSetAuthorityCh
 	}
 
 	if (NetDriver->DebugCtx && Op.authority == WORKER_AUTHORITY_NOT_AUTHORITATIVE
-		&& Op.component_set_id == SpatialConstants::GDK_DEBUG_COMPONENT_ID)
+		&& Op.component_set_id == SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID)
 	{
 		NetDriver->DebugCtx->OnDebugComponentAuthLost(Op.entity_id);
 	}

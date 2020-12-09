@@ -440,11 +440,6 @@ inline Worker_ComponentId RPCTypeToWorkerComponentIdLegacy(ERPCType RPCType)
 	}
 }
 
-inline Worker_ComponentId GetClientAuthorityComponent(bool bUsingRingBuffers)
-{
-	return bUsingRingBuffers ? CLIENT_ENDPOINT_COMPONENT_ID : CLIENT_RPC_ENDPOINT_COMPONENT_ID_LEGACY;
-}
-
 const TArray<FString> ServerAuthorityWellKnownSchemaImports = {
 	"improbable/standard_library.schema",
 	"unreal/gdk/authority_intent.schema",

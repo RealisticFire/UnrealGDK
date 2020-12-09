@@ -451,6 +451,10 @@ void UGlobalStateManager::TriggerBeginPlay()
 
 	NetDriver->World->GetWorldSettings()->SetGSMReadyForPlay();
 	NetDriver->World->GetWorldSettings()->NotifyBeginPlay();
+
+	// Hmm - this seems necessary because unless we call this after NotifyBeginPlay has been triggered, it won't actually
+	// do anything. I'm not sure why we called SetAcceptingPlayers above though.
+	SetAcceptingPlayers(true);
 }
 
 bool UGlobalStateManager::GetCanBeginPlay() const
@@ -461,8 +465,7 @@ bool UGlobalStateManager::GetCanBeginPlay() const
 bool UGlobalStateManager::IsReady() const
 {
 	return GetCanBeginPlay()
-		   || NetDriver->StaticComponentView->HasAuthority(GlobalStateManagerEntityId,
-														   SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID);
+		   || NetDriver->StaticComponentView->HasAuthority(GlobalStateManagerEntityId, SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID);
 }
 
 void UGlobalStateManager::SendCanBeginPlayUpdate(const bool bInCanBeginPlay)
