@@ -453,7 +453,9 @@ void UGlobalStateManager::TriggerBeginPlay()
 	NetDriver->World->GetWorldSettings()->NotifyBeginPlay();
 
 	// Hmm - this seems necessary because unless we call this after NotifyBeginPlay has been triggered, it won't actually
-	// do anything. I'm not sure why we called SetAcceptingPlayers above though.
+	// do anything, because internally it checks that BeginPlay has actually been called. I'm not sure why we called
+	// SetAcceptingPlayers above though unless it was only to catch the non-auth server instances. In which case the auth
+	// server is failing to call SetAcceptingPlayers again at some later point.
 	SetAcceptingPlayers(true);
 }
 
