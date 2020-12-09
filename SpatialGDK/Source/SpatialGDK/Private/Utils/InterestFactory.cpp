@@ -238,7 +238,7 @@ void InterestFactory::AddServerSelfInterest(Interest& OutInterest) const
 	// Add a query for the load balancing worker (whoever is delegated the auth delegation component) to read the authority intent
 	Query LoadBalanceQuery;
 	LoadBalanceQuery.Constraint.bSelfConstraint = true;
-	LoadBalanceQuery.ResultComponentSetIds = { SpatialConstants::AUTHORITY_INTENT_COMPONENT_ID,
+	LoadBalanceQuery.ResultComponentIds = { SpatialConstants::AUTHORITY_INTENT_COMPONENT_ID,
 											   SpatialConstants::NET_OWNING_CLIENT_WORKER_COMPONENT_ID,
 											   SpatialConstants::LB_TAG_COMPONENT_ID };
 	AddComponentQueryPairToInterestComponent(OutInterest, SpatialConstants::SERVER_AUTH_COMPONENT_SET_ID, LoadBalanceQuery);
